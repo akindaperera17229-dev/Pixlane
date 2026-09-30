@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# ─── Dependencies ────────────────────────────────────────────
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +8,56 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ─── Next.js ─────────────────────────────────────────────────
 /.next/
 /out/
-
-# production
 /build
 
-# misc
-.DS_Store
-*.pem
+# ─── Environment Variables (NEVER commit these) ───────────────
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env*.local
 
-# debug
+# ─── Supabase local dev ───────────────────────────────────────
+/supabase/.branches
+/supabase/.temp
+
+# ─── Testing ─────────────────────────────────────────────────
+/coverage
+
+# ─── OS Files ────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# ─── Editor/IDE ──────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ─── Debug Logs ──────────────────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ─── Certs / Keys ────────────────────────────────────────────
+*.pem
+*.key
+*.cert
 
-# vercel
+# ─── Deployment ──────────────────────────────────────────────
 .vercel
 
-# typescript
+# ─── TypeScript ──────────────────────────────────────────────
 *.tsbuildinfo
 next-env.d.ts
