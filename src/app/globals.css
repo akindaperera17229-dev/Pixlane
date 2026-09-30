@@ -1,20 +1,45 @@
 @import "tailwindcss";
 
-:root {
-  --background: #09090f;
-  --foreground: #f8f8f2;
+@theme inline {
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  
+  --color-peach-50: #FFF6F3;
+  --color-peach-100: #FFEAE4;
+  --color-peach-200: #FFD5C8;
+  --color-peach-300: #FFB7A2;
+  --color-peach-400: #FF9478;
+  --color-peach-500: #FF7654;
+  --color-peach-600: #F45732;
+  --color-peach-700: #D43E19;
+  --color-peach-800: #A83013;
+  --color-peach-900: #6B1E0C;
+  --color-peach-950: #3D0E05;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+:root {
+  --background: #FFFDFB;
+  --foreground: #221513;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  /* Disable tap delay & rubber-band horizontal scrolling for native mobile feel */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS Safe Area Padding Utilities */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
 }
 
 /* Smooth scrolling */
@@ -22,33 +47,44 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar for dark theme */
+/* Elegant scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #111111;
+  background: #FFF6F3;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+  background: #FFD5C8;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #FF9478;
 }
 
-/* Gradient text utility */
-.gradient-text {
-  background: linear-gradient(135deg, #fbbf24, #f97316);
+/* Peach Glow & Glass Utilities */
+.peach-glass {
+  background: rgba(255, 253, 251, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 213, 200, 0.45);
+}
+
+.peach-dark-glass {
+  background: rgba(34, 21, 19, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 148, 120, 0.18);
+}
+
+.peach-gradient-text {
+  background: linear-gradient(135deg, #FF6642 0%, #FF8F70 50%, #FFA985 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Glass card utility */
-.glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.peach-pill-shadow {
+  box-shadow: 0 10px 30px -8px rgba(255, 118, 84, 0.35);
 }

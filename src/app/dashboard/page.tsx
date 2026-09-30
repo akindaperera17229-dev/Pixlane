@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Camera, Plus, Calendar, Images, ArrowRight, Sparkles, LogOut, QrCode } from 'lucide-react'
 import { format } from 'date-fns'
 import { Event } from '@/types/database'
 
@@ -15,6 +16,7 @@ async function signOut() {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
   if (!user) redirect('/auth')
 
   const { data: eventsRaw } = await supabase
@@ -25,118 +27,200 @@ export default async function DashboardPage() {
 
   type EventWithCount = Event & { photos: { count: number }[] }
   const events = eventsRaw as EventWithCount[] | null
-  const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'there'
+
+  const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'Friend'
   const totalPhotos = events?.reduce((sum, e) => sum + ((e.photos?.[0]?.count) ?? 0), 0) ?? 0
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      {/* Nav */}
-      <header className="border-b border-gray-800/60 bg-gray-950/90 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-[#FFFDFB] text-[#221513] pb-24 md:pb-12">
+      {/* ─── APP HEADER ─── */}
+      <header className="bg-white border-b border-[#FFEAE4] sticky top-0 z-40 shadow-xs">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#FF7654] to-[#FFA387] flex items-center justify-center text-white shadow-xs">
+              <Camera className="w-5 h-5" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-white">Pixlane</span>
+            <span className="font-extrabold text-lg text-[#221513] tracking-tight">Pixlane</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400 hidden sm:block">{user.email}</span>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 bg-[#FFF6F3] border border-[#FFEAE4] px-3 py-1.5 rounded-full text-xs font-bold text-[#6E554F]">
+              <span className="w-2 h-2 rounded-full bg-[#FF7654]" />
+              <span>{user.email}</span>
+            </div>
+
             <form action={signOut}>
-              <button type="submit" className="text-sm text-gray-500 hover:text-gray-300 transition-colors px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700">
-                Sign out
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#6E554F] hover:text-[#D43E19] bg-[#FFF6F3] hover:bg-[#FFEAE4] px-3 py-1.5 rounded-xl border border-[#FFEAE4] transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign out</span>
               </button>
             </form>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        {/* Header + Stats */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Hey, {firstName} 👋</h1>
-            <p className="text-gray-400 mt-1 text-sm">Manage your events and photo galleries</p>
+      {/* ─── MAIN CONTENT ─── */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Welcome & Stats Banner */}
+        <div className="bg-gradient-to-br from-[#FFEAE4] via-[#FFF5F2] to-[#FFFDFB] border border-[#FFD5C8] rounded-3xl p-6 sm:p-8 mb-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D43E19] uppercase tracking-wider mb-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Host Dashboard</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#221513] tracking-tight">
+                Hey, {firstName}! 👋
+              </h1>
+              <p className="text-xs sm:text-sm text-[#6E554F] mt-1">
+                Manage your shared albums, display QR codes, and download high-res photos.
+              </p>
+            </div>
+
+            <Link
+              href="/dashboard/create"
+              className="inline-flex items-center justify-center gap-2 bg-[#FF7654] hover:bg-[#F45732] text-white font-extrabold text-sm px-5 py-3 rounded-2xl shadow-md shadow-[#FF7654]/25 hover:shadow-lg transition-all self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Create New Event</span>
+            </Link>
           </div>
-          <Link href="/dashboard/create"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-5 py-2.5 rounded-xl hover:from-amber-400 hover:to-orange-400 transition-all shadow-lg shadow-amber-500/20 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            New event
-          </Link>
+
+          {/* Quick Stat Chips */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-[#FFD5C8]/60">
+            <div className="bg-white/80 backdrop-blur-xs rounded-2xl p-3 sm:p-4 border border-[#FFEAE4] text-center">
+              <span className="text-xl sm:text-2xl font-black text-[#221513]">
+                {events?.length ?? 0}
+              </span>
+              <p className="text-[11px] font-bold text-[#6E554F] mt-0.5 uppercase tracking-wider">
+                Total Events
+              </p>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-xs rounded-2xl p-3 sm:p-4 border border-[#FFEAE4] text-center">
+              <span className="text-xl sm:text-2xl font-black text-[#FF7654]">
+                {events?.filter((e) => e.is_active).length ?? 0}
+              </span>
+              <p className="text-[11px] font-bold text-[#6E554F] mt-0.5 uppercase tracking-wider">
+                Active Now
+              </p>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-xs rounded-2xl p-3 sm:p-4 border border-[#FFEAE4] text-center">
+              <span className="text-xl sm:text-2xl font-black text-[#D43E19]">
+                {totalPhotos}
+              </span>
+              <p className="text-[11px] font-bold text-[#6E554F] mt-0.5 uppercase tracking-wider">
+                Photos Collected
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        {events && events.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            {[
-              { label: 'Total Events', value: events.length },
-              { label: 'Active', value: events.filter(e => e.is_active).length },
-              { label: 'Total Photos', value: totalPhotos },
-            ].map(stat => (
-              <div key={stat.label} className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* ─── EVENTS LIST ─── */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-extrabold text-[#221513]">Your Event Albums</h2>
+          {events && events.length > 0 && (
+            <span className="text-xs font-bold text-[#6E554F]">
+              {events.length} {events.length === 1 ? 'event' : 'events'}
+            </span>
+          )}
+        </div>
 
-        {/* Events Grid */}
         {!events || events.length === 0 ? (
-          <div className="bg-gray-900/40 border border-dashed border-gray-700 rounded-2xl p-16 text-center">
-            <div className="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              </svg>
+          <div className="bg-white rounded-3xl border border-dashed border-[#FFD5C8] p-12 sm:p-16 text-center shadow-xs">
+            <div className="w-16 h-16 bg-[#FFEAE4] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#D43E19]">
+              <Camera className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No events yet</h3>
-            <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">Create your first event and start collecting photos from everyone at your next occasion.</p>
-            <Link href="/dashboard/create"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-6 py-3 rounded-xl hover:from-amber-400 hover:to-orange-400 transition-all shadow-lg shadow-amber-500/20">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Create first event
+            <h3 className="text-lg font-extrabold text-[#221513] mb-2">No events created yet</h3>
+            <p className="text-xs sm:text-sm text-[#6E554F] mb-6 max-w-sm mx-auto">
+              Going on an outing, hosting a birthday or wedding? Set up your first shared gallery in seconds.
+            </p>
+            <Link
+              href="/dashboard/create"
+              className="inline-flex items-center gap-2 bg-[#FF7654] hover:bg-[#F45732] text-white font-extrabold text-sm px-6 py-3 rounded-2xl shadow-md shadow-[#FF7654]/25 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create First Event</span>
             </Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {events.map(event => {
-              const photoCount = event.photos?.[0]?.count ?? 0
-              const pct = Math.min((photoCount / event.photo_limit) * 100, 100)
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {events.map((event) => {
+              const photoCount = (event.photos as unknown as { count: number }[])?.[0]?.count ?? 0
+              const percentage = Math.min((photoCount / event.photo_limit) * 100, 100)
+
               return (
-                <Link key={event.id} href={`/dashboard/events/${event.id}`}
-                  className="group bg-gray-900/60 border border-gray-800 rounded-2xl p-5 hover:border-amber-500/40 hover:bg-gray-900/80 transition-all">
-                  {/* Status + Code */}
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-                      event.is_active ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-gray-800 text-gray-500 border border-gray-700'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${event.is_active ? 'bg-green-400' : 'bg-gray-600'}`} />
-                      {event.is_active ? 'Active' : 'Closed'}
-                    </span>
-                    <span className="text-xs font-mono text-gray-600 bg-gray-800/60 px-2 py-1 rounded-lg">{event.code}</span>
+                <Link
+                  key={event.id}
+                  href={`/dashboard/events/${event.id}`}
+                  className="group bg-white rounded-3xl border border-[#FFEAE4] hover:border-[#FFB7A2] p-5 shadow-xs hover:shadow-lg hover:shadow-[#FF7654]/10 transition-all duration-200 flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Header Row: Status & Code Badge */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                          event.is_active
+                            ? 'bg-[#FFEAE4] text-[#D43E19]'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            event.is_active ? 'bg-[#FF7654] animate-pulse' : 'bg-gray-400'
+                          }`}
+                        />
+                        {event.is_active ? 'Accepting Photos' : 'Closed'}
+                      </span>
+
+                      <span className="font-mono text-xs font-bold text-[#6E554F] bg-[#FFF6F3] border border-[#FFEAE4] px-2 py-0.5 rounded-lg flex items-center gap-1">
+                        <QrCode className="w-3 h-3 text-[#FF7654]" />
+                        {event.code}
+                      </span>
+                    </div>
+
+                    <h3 className="font-extrabold text-base text-[#221513] group-hover:text-[#FF7654] transition-colors line-clamp-1 mb-1">
+                      {event.name}
+                    </h3>
+
+                    {event.description && (
+                      <p className="text-xs text-[#6E554F] line-clamp-2 mb-3">
+                        {event.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-1.5 text-xs text-[#6E554F] mb-4">
+                      <Calendar className="w-3.5 h-3.5 text-[#FF7654]" />
+                      <span>
+                        {event.event_date
+                          ? format(new Date(event.event_date), 'MMM d, yyyy')
+                          : 'No date specified'}
+                      </span>
+                    </div>
                   </div>
 
-                  <h3 className="font-bold text-white text-base mb-1 group-hover:text-amber-400 transition-colors line-clamp-1">{event.name}</h3>
-
-                  <p className="text-xs text-gray-500 mb-4">
-                    {event.event_date ? format(new Date(event.event_date), 'MMM d, yyyy') : 'No date set'}
-                  </p>
-
-                  {/* Photo progress bar */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">{photoCount} photos</span>
-                      <span className="text-gray-600">{event.photo_limit} limit</span>
+                  {/* Footer with photo bar */}
+                  <div className="pt-3 border-t border-[#FFEAE4]">
+                    <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                      <span className="flex items-center gap-1 text-[#FF7654]">
+                        <Images className="w-3.5 h-3.5" />
+                        <span>{photoCount} photos</span>
+                      </span>
+                      <span className="text-[#6E554F] font-normal">
+                        Max {event.photo_limit}
+                      </span>
                     </div>
-                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all"
-                        style={{ width: `${pct}%` }} />
+
+                    <div className="w-full bg-[#FFF6F3] rounded-full h-2 overflow-hidden border border-[#FFEAE4]">
+                      <div
+                        className="bg-gradient-to-r from-[#FF7654] to-[#FFA387] h-full rounded-full transition-all duration-300"
+                        style={{ width: `${percentage}%` }}
+                      />
                     </div>
                   </div>
                 </Link>
@@ -145,6 +229,17 @@ export default async function DashboardPage() {
           </div>
         )}
       </main>
+
+      {/* ─── MOBILE STICKY FLOATING ACTION BUTTON ─── */}
+      <div className="fixed bottom-6 right-6 md:hidden z-30">
+        <Link
+          href="/dashboard/create"
+          className="flex items-center gap-2 bg-[#FF7654] text-white font-extrabold text-sm px-5 py-3.5 rounded-full shadow-lg shadow-[#FF7654]/40 active:scale-95 transition-transform"
+        >
+          <Plus className="w-5 h-5 stroke-[3]" />
+          <span>New Event</span>
+        </Link>
+      </div>
     </div>
   )
 }

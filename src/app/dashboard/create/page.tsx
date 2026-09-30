@@ -4,15 +4,16 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { generateEventCode } from '@/lib/utils'
+import { ArrowLeft, Calendar, FileText, Camera, Sparkles, Check } from 'lucide-react'
 import Link from 'next/link'
 
-const OCCASION_TYPES = [
-  { emoji: '💍', label: 'Wedding / Poruwa' },
-  { emoji: '🎂', label: 'Birthday' },
-  { emoji: '🎓', label: 'Graduation / Batch' },
-  { emoji: '🏝️', label: 'Trip / Outing' },
-  { emoji: '🙏', label: 'Almsgiving / Dāna' },
-  { emoji: '🎉', label: 'Party / Other' },
+const POPULAR_OCCASIONS = [
+  { emoji: '🌴', title: 'Outing / Trip', hint: 'Beach, hike, Ella, road trip' },
+  { emoji: '💍', title: 'Wedding / Poruwa', hint: 'Ceremony, reception, afterparty' },
+  { emoji: '🎂', title: 'Birthday Bash', hint: 'Party, dinner, night celebration' },
+  { emoji: '🎓', title: 'Batch / Uni Event', hint: 'Reunion, farewell, sports meet' },
+  { emoji: '🏮', title: 'Tradition / Festival', hint: 'Avurudu, Vesak, Dāna, temple' },
+  { emoji: '✨', title: 'Other Gatherings', hint: 'Casual meetup, office hangout' },
 ]
 
 export default function CreateEventPage() {
@@ -20,120 +21,199 @@ export default function CreateEventPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [eventDate, setEventDate] = useState('')
-  const [selectedOccasion, setSelectedOccasion] = useState('')
+  const [selectedTag, setSelectedTag] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
   const supabase = createClient()
 
-  function pickOccasion(label: string) {
-    setSelectedOccasion(label)
-    if (!name) setName(label)
+  function handleSelectOccasion(title: string) {
+    setSelectedTag(title)
+    if (!name) {
+      setName(title)
+    }
   }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true); setError('')
+    setLoading(true)
+    setError('')
+
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/auth'); return }
+    if (!user) {
+      router.push('/auth')
+      return
+    }
+
     const code = generateEventCode()
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: err } = await (supabase as any)
       .from('events')
-      .insert({ host_id: user.id, name: name.trim(), description: description.trim() || null, event_date: eventDate || null, code, is_active: true, photo_limit: 30 })
-      .select().single()
-    if (err) { setError(err.message); setLoading(false); return }
+      .insert({
+        host_id: user.id,
+        name: name.trim(),
+        description: description.trim() || null,
+        event_date: eventDate || null,
+        code,
+        is_active: true,
+        photo_limit: 30,
+      })
+      .select()
+      .single()
+
+    if (err) {
+      setError(err.message)
+      setLoading(false)
+      return
+    }
+
     router.push(`/dashboard/events/${data.id}`)
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      {/* Nav */}
-      <header className="border-b border-gray-800/60 bg-gray-950/90 backdrop-blur">
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
-          <Link href="/dashboard" className="text-gray-500 hover:text-gray-300 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </Link>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              </svg>
+    <div className="min-h-screen bg-[#FFFDFB] text-[#221513] pb-16">
+      {/* ─── APP HEADER ─── */}
+      <header className="bg-white border-b border-[#FFEAE4] sticky top-0 z-40">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="w-9 h-9 rounded-xl bg-[#FFF6F3] border border-[#FFEAE4] flex items-center justify-center text-[#6E554F] hover:text-[#221513] hover:bg-[#FFEAE4] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-xl bg-[#FF7654] flex items-center justify-center text-white">
+                <Camera className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-extrabold text-base text-[#221513]">Create Event</span>
             </div>
-            <span className="font-bold text-white text-sm">Pixlane</span>
-          </Link>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Create a new event</h1>
-          <p className="text-gray-400 mt-1 text-sm">Fill in the details below to get your shareable gallery link.</p>
+      {/* ─── MAIN CONTENT ─── */}
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <span className="text-xs font-bold text-[#D43E19] bg-[#FFEAE4] px-3 py-1 rounded-full uppercase tracking-wider">
+            Step 1 of 1
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#221513] mt-2">
+            Let&apos;s set up your shared album
+          </h1>
+          <p className="text-xs sm:text-sm text-[#6E554F] mt-1">
+            Pick what kind of occasion this is and give it a cool name.
+          </p>
         </div>
 
-        {/* Occasion picker */}
+        {/* Occasion Pickers */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-gray-400 mb-3">What&apos;s the occasion?</p>
-          <div className="grid grid-cols-3 gap-2">
-            {OCCASION_TYPES.map(({ emoji, label }) => (
-              <button key={label} type="button" onClick={() => pickOccasion(label)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-sm transition-all ${
-                  selectedOccasion === label
-                    ? 'border-amber-500/60 bg-amber-500/10 text-amber-400'
-                    : 'border-gray-800 bg-gray-900/40 text-gray-400 hover:border-gray-700 hover:text-gray-300'
-                }`}>
-                <span className="text-2xl">{emoji}</span>
-                <span className="text-xs leading-tight text-center">{label}</span>
-              </button>
-            ))}
+          <label className="block text-xs font-bold text-[#221513] uppercase tracking-wider mb-2.5">
+            Select Occasion Type
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {POPULAR_OCCASIONS.map((occ) => {
+              const isSelected = selectedTag === occ.title
+              return (
+                <button
+                  key={occ.title}
+                  type="button"
+                  onClick={() => handleSelectOccasion(occ.title)}
+                  className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+                    isSelected
+                      ? 'border-[#FF7654] bg-[#FFEAE4] shadow-xs'
+                      : 'border-[#FFEAE4] bg-white hover:bg-[#FFF6F3]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xl">{occ.emoji}</span>
+                    {isSelected && (
+                      <span className="w-4 h-4 rounded-full bg-[#FF7654] text-white flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-bold text-[#221513]">{occ.title}</p>
+                  <p className="text-[10px] text-[#6E554F] truncate mt-0.5">{occ.hint}</p>
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-7">
+        {/* Event Form */}
+        <div className="bg-white rounded-3xl border border-[#FFEAE4] shadow-sm p-6 sm:p-7">
           <form onSubmit={handleCreate} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Event name <span className="text-amber-500">*</span>
+              <label className="block text-xs font-bold text-[#221513] uppercase tracking-wider mb-1.5">
+                Event Name <span className="text-[#FF7654]">*</span>
               </label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)}
-                placeholder="e.g. Nithya & Kamal's Poruwa, Batch Trip Ella 2026"
-                required maxLength={80}
-                className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors" />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Mirissa Beach Trip '26, Sandun & Nethmi Poruwa"
+                required
+                maxLength={80}
+                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDFB] border border-[#FFD5C8] text-[#221513] placeholder-[#A83013]/40 focus:outline-none focus:ring-2 focus:ring-[#FF7654] focus:border-transparent text-sm transition-all"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Event date <span className="text-gray-600 font-normal">(optional)</span>
+              <label className="flex items-center gap-1.5 text-xs font-bold text-[#221513] uppercase tracking-wider mb-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#FF7654]" />
+                <span>Event Date (optional)</span>
               </label>
-              <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors" />
+              <input
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDFB] border border-[#FFD5C8] text-[#221513] focus:outline-none focus:ring-2 focus:ring-[#FF7654] focus:border-transparent text-sm transition-all"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Message to guests <span className="text-gray-600 font-normal">(optional)</span>
+              <label className="flex items-center gap-1.5 text-xs font-bold text-[#221513] uppercase tracking-wider mb-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#FF7654]" />
+                <span>Guest Note / Instructions (optional)</span>
               </label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)}
-                placeholder="A short message guests will see when they open the upload page…"
-                rows={3} maxLength={300}
-                className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors resize-none" />
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add all your candid shots, selfies, and group pics here!"
+                rows={3}
+                maxLength={250}
+                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDFB] border border-[#FFD5C8] text-[#221513] placeholder-[#A83013]/40 focus:outline-none focus:ring-2 focus:ring-[#FF7654] focus:border-transparent text-sm transition-all resize-none"
+              />
             </div>
 
-            {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl">{error}</div>}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-2xl">
+                {error}
+              </div>
+            )}
 
-            <div className="bg-amber-500/5 border border-amber-500/20 text-amber-400/80 text-sm px-4 py-3 rounded-xl">
-              📸 Free plan includes up to <strong className="text-amber-400">30 photos</strong> per event.
+            <div className="bg-[#FFF6F3] border border-[#FFEAE4] rounded-2xl p-4 flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-[#FF7654] shrink-0 mt-0.5" />
+              <p className="text-xs text-[#6E554F] leading-relaxed">
+                Free plan includes <strong className="text-[#221513]">30 photos</strong> per album with high-res preservation. You can upgrade anytime for larger gatherings.
+              </p>
             </div>
 
-            <div className="flex gap-3 pt-1">
-              <Link href="/dashboard"
-                className="flex-1 text-center py-3 rounded-xl border border-gray-700 text-gray-400 font-medium hover:border-gray-600 hover:text-gray-300 transition-colors text-sm">
+            <div className="flex gap-3 pt-2">
+              <Link
+                href="/dashboard"
+                className="flex-1 text-center py-3.5 rounded-2xl border border-[#FFEAE4] text-[#6E554F] font-bold hover:bg-[#FFF6F3] transition-colors text-sm"
+              >
                 Cancel
               </Link>
-              <button type="submit" disabled={loading || !name.trim()}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-amber-500/20 text-sm">
-                {loading ? 'Creating…' : 'Create event →'}
+              <button
+                type="submit"
+                disabled={loading || !name.trim()}
+                className="flex-1 bg-gradient-to-r from-[#FF7654] to-[#FFA387] hover:from-[#F45732] hover:to-[#FF8E72] text-white font-extrabold py-3.5 rounded-2xl shadow-md shadow-[#FF7654]/25 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all text-sm"
+              >
+                {loading ? 'Creating...' : 'Generate Album & QR →'}
               </button>
             </div>
           </form>

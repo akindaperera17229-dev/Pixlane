@@ -1,11 +1,11 @@
 {
   "name": "Pixlane",
   "short_name": "Pixlane",
-  "description": "Share your event moments — every angle, one place.",
+  "description": "Share your event moments in full original quality — every angle, one place.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d1f",
-  "theme_color": "#0f766e",
+  "background_color": "#FFFDFB",
+  "theme_color": "#FF7654",
   "orientation": "portrait",
   "icons": [
     {

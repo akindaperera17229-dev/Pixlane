@@ -1,25 +1,37 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin'] })
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jakarta',
+  weight: ['400', '500', '600', '700', '800'],
+})
 
 export const metadata: Metadata = {
   title: 'Pixlane — Every angle. One place.',
-  description: "Create an event. Share a link. Collect everyone's photos in one beautiful gallery. Built for Sri Lanka.",
+  description: "Capture & collect high-res memories from every friend without quality loss. Zero app download required.",
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Pixlane',
+  },
   openGraph: {
     title: 'Pixlane',
-    description: 'Share your event moments — no app needed.',
+    description: 'Share your event moments in full resolution — no app needed.',
     type: 'website',
   },
 }
 
-// themeColor must be in viewport export, not metadata (Next.js 15+)
+// Peach theme color for browser tab bar / mobile status bar
 export const viewport: Viewport = {
-  themeColor: '#0f766e',
+  themeColor: '#FF7654',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -28,9 +40,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    // suppressHydrationWarning prevents false hydration errors from browser extensions
-    <html lang="en" suppressHydrationWarning>
-      <body className={geist.className}>
+    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
+      <body className="font-sans bg-[#FFFDFB] text-[#221513] antialiased selection:bg-[#FFEAE4] selection:text-[#D43E19]">
         {children}
       </body>
     </html>

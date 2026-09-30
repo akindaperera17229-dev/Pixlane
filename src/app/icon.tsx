@@ -1,10 +1,8 @@
 import { ImageResponse } from 'next/og'
 
-// App icon sizes for PWA and browser tab
 export const sizes = [192, 512]
 export const contentType = 'image/png'
 
-// Generates icon.png dynamically — fixes the 404 for icon-192.png / icon-512.png
 export default function Icon({ params }: { params?: { size?: string } }) {
   const size = params?.size ? parseInt(params.size) : 192
 
@@ -17,11 +15,10 @@ export default function Icon({ params }: { params?: { size?: string } }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
+          background: 'linear-gradient(135deg, #FF7654 0%, #FFA387 100%)',
           borderRadius: size * 0.22,
         }}
       >
-        {/* Camera lens circle */}
         <div
           style={{
             width: size * 0.55,
@@ -39,7 +36,7 @@ export default function Icon({ params }: { params?: { size?: string } }) {
               height: size * 0.28,
               borderRadius: '50%',
               background: 'white',
-              opacity: 0.9,
+              opacity: 0.95,
             }}
           />
         </div>
