@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   Camera,
   Download,
@@ -21,7 +21,7 @@ import {
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
-      {/* ───────────────── NAV ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-gray-950/70 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
@@ -44,13 +44,13 @@ export default function Home() {
           {/* CTA buttons */}
           <div className="flex items-center gap-3">
             <Link
-              href="/sign-in"
+              href="/auth"
               className="hidden sm:inline-flex text-sm font-semibold text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-white/5"
             >
               Sign in
             </Link>
             <Link
-              href="/sign-up"
+              href="/auth?mode=signup"
               className="inline-flex items-center gap-2 text-sm font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/50 hover:scale-105 transition-all duration-200"
             >
               Get Started <ArrowRight className="w-4 h-4" />
@@ -59,7 +59,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ───────────────── HERO ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0d0d1f] via-[#110820] to-[#1a0a2e]" />
@@ -100,14 +100,14 @@ export default function Home() {
             <p className="text-lg text-gray-400 leading-relaxed max-w-lg">
               Pixlane is the{" "}
               <span className="text-teal-400 font-semibold">premium event photo hub</span>{" "}
-              built for Sri Lankan weddings, birthday bashes, temple festivals, uni batch trips — every moment that matters.
+              built for Sri Lankan weddings, birthday bashes, temple festivals, uni batch trips â€” every moment that matters.
               Full-quality photos. Zero hassle. Instant access.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 mt-2">
               <Link
-                href="/sign-up"
+                href="/auth?mode=signup"
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 font-black text-base px-8 py-4 rounded-2xl shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-105 transition-all duration-200"
               >
                 Start Sharing Free <ArrowRight className="w-5 h-5" />
@@ -179,8 +179,8 @@ export default function Home() {
                 {/* Bottom info bar */}
                 <div className="px-4 pb-4 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-bold text-white">Perera Wedding 2026 💍</p>
-                    <p className="text-xs text-gray-500">247 photos · 18 contributors</p>
+                    <p className="text-xs font-bold text-white">Perera Wedding 2026 ðŸ’</p>
+                    <p className="text-xs text-gray-500">247 photos Â· 18 contributors</p>
                   </div>
                   <div className="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/30 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg">
                     <Share2 className="w-3.5 h-3.5" /> Share
@@ -212,7 +212,7 @@ export default function Home() {
 
               {/* Upload count pill */}
               <div className="absolute top-1/2 -left-12 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 text-xs font-black px-3 py-2 rounded-xl shadow-lg shadow-amber-500/30 -rotate-6">
-                📸 Original quality
+                ðŸ“¸ Original quality
               </div>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function Home() {
         <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-gray-950 to-transparent pointer-events-none" />
       </section>
 
-      {/* ───────────────── STATS STRIP ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ STATS STRIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative bg-gray-950 border-y border-white/5 py-12">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-10 text-center">
           {[
@@ -256,7 +256,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────── OCCASIONS ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ OCCASIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="occasions" className="py-28 bg-gray-950">
         <div className="max-w-7xl mx-auto px-6">
           {/* Section header */}
@@ -271,7 +271,7 @@ export default function Home() {
               </span>
             </h2>
             <p className="text-gray-400 text-lg max-w-xl mx-auto">
-              From the poruwa ceremony to the after-party — Pixlane captures every scene your community creates.
+              From the poruwa ceremony to the after-party â€” Pixlane captures every scene your community creates.
             </p>
           </div>
 
@@ -279,39 +279,39 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
               {
-                emoji: "💍",
+                emoji: "ðŸ’",
                 title: "Wedding (Poruwa)",
-                desc: "Collect stunning shots from every guest at your poruwa ceremony, reception and mehendi night — all in one private gallery.",
+                desc: "Collect stunning shots from every guest at your poruwa ceremony, reception and mehendi night â€” all in one private gallery.",
                 gradient: "from-rose-500/20 to-pink-500/10",
                 border: "border-rose-500/20 hover:border-rose-400/40",
                 accent: "text-rose-400",
               },
               {
-                emoji: "🎂",
+                emoji: "ðŸŽ‚",
                 title: "Birthday Bash",
-                desc: "Let everyone share their favourite moments from the party. Full-res photos, group selfies, candid shots — all saved forever.",
+                desc: "Let everyone share their favourite moments from the party. Full-res photos, group selfies, candid shots â€” all saved forever.",
                 gradient: "from-amber-500/20 to-orange-500/10",
                 border: "border-amber-500/20 hover:border-amber-400/40",
                 accent: "text-amber-400",
               },
               {
-                emoji: "🎓",
+                emoji: "ðŸŽ“",
                 title: "University Batch",
-                desc: "Your batch trip, convocation, farewell — build a shared album that the whole batch can download long after the day ends.",
+                desc: "Your batch trip, convocation, farewell â€” build a shared album that the whole batch can download long after the day ends.",
                 gradient: "from-teal-500/20 to-cyan-500/10",
                 border: "border-teal-500/20 hover:border-teal-400/40",
                 accent: "text-teal-400",
               },
               {
-                emoji: "🏮",
+                emoji: "ðŸ®",
                 title: "Temple Festival",
-                desc: "Vesak lanterns, Esala Perahera, Avurudu — celebrate traditions with a beautiful collaborative gallery everyone can join.",
+                desc: "Vesak lanterns, Esala Perahera, Avurudu â€” celebrate traditions with a beautiful collaborative gallery everyone can join.",
                 gradient: "from-purple-500/20 to-violet-500/10",
                 border: "border-purple-500/20 hover:border-purple-400/40",
                 accent: "text-purple-400",
               },
               {
-                emoji: "🌴",
+                emoji: "ðŸŒ´",
                 title: "Office Trip",
                 desc: "Your team's team-building trip deserves more than scattered WhatsApp groups. One gallery, every shot, zero drama.",
                 gradient: "from-green-500/20 to-emerald-500/10",
@@ -319,9 +319,9 @@ export default function Home() {
                 accent: "text-green-400",
               },
               {
-                emoji: "✨",
+                emoji: "âœ¨",
                 title: "Any Occasion",
-                desc: "Family reunions, school reunions, engagement parties — if you're gathering, Pixlane is the photo hub for your crowd.",
+                desc: "Family reunions, school reunions, engagement parties â€” if you're gathering, Pixlane is the photo hub for your crowd.",
                 gradient: "from-indigo-500/20 to-blue-500/10",
                 border: "border-indigo-500/20 hover:border-indigo-400/40",
                 accent: "text-indigo-400",
@@ -343,7 +343,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────── HOW IT WORKS ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ HOW IT WORKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="how" className="py-28 bg-gradient-to-b from-gray-950 via-[#100820] to-gray-950">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -381,7 +381,7 @@ export default function Home() {
                 bg: "from-teal-400 to-cyan-500",
                 shadow: "shadow-teal-500/30",
                 title: "Share the Link",
-                desc: "Send the link or QR code to all your guests. They open it in any browser — no account, no app download required.",
+                desc: "Send the link or QR code to all your guests. They open it in any browser â€” no account, no app download required.",
               },
               {
                 step: "03",
@@ -389,7 +389,7 @@ export default function Home() {
                 bg: "from-purple-400 to-pink-500",
                 shadow: "shadow-purple-500/30",
                 title: "Collect & Download",
-                desc: "Watch the gallery fill up in real time. Download all photos at once in full original quality — ready to print or relive.",
+                desc: "Watch the gallery fill up in real time. Download all photos at once in full original quality â€” ready to print or relive.",
               },
             ].map(({ step, icon, bg, shadow, title, desc }, i) => (
               <div
@@ -412,7 +412,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────── COMPARISON TABLE ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ COMPARISON TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="compare" className="py-28 bg-gray-950">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -441,7 +441,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="px-6 py-5 text-center">
-                <span className="text-gray-400 font-bold text-sm">💬 WhatsApp</span>
+                <span className="text-gray-400 font-bold text-sm">ðŸ’¬ WhatsApp</span>
               </div>
             </div>
 
@@ -452,7 +452,7 @@ export default function Home() {
               { feature: "Bulk Download", pixlane: "One-click ZIP", whatsapp: "Save one by one", pixlaneGood: true, whatsappGood: false },
               { feature: "Photo Limit", pixlane: "Unlimited", whatsapp: "Group clutter", pixlaneGood: true, whatsappGood: false },
               { feature: "Privacy Control", pixlane: "Host manages access", whatsapp: "Anyone in group", pixlaneGood: true, whatsappGood: false },
-              { feature: "App Required", pixlane: "No — browser only", whatsapp: "Yes — install required", pixlaneGood: true, whatsappGood: false },
+              { feature: "App Required", pixlane: "No â€” browser only", whatsapp: "Yes â€” install required", pixlaneGood: true, whatsappGood: false },
             ].map(({ feature, pixlane, whatsapp, pixlaneGood, whatsappGood }, i) => (
               <div
                 key={i}
@@ -499,7 +499,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────── FEATURES HIGHLIGHT ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ FEATURES HIGHLIGHT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-16 bg-gradient-to-b from-gray-950 to-[#0d0d1f]">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-6">
           {[
@@ -518,7 +518,7 @@ export default function Home() {
             {
               icon: <Download className="w-6 h-6 text-orange-400" />,
               title: "Instant Bulk Download",
-              desc: "Download every photo in full resolution with a single click — all packed into an organised ZIP.",
+              desc: "Download every photo in full resolution with a single click â€” all packed into an organised ZIP.",
               color: "orange",
             },
           ].map(({ icon, title, desc, color }, i) => (
@@ -538,7 +538,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────── BOTTOM CTA ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ BOTTOM CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="py-28 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a2e] via-[#0d0d1f] to-[#0f1a30]" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-500/8 rounded-full blur-3xl pointer-events-none" />
@@ -557,18 +557,18 @@ export default function Home() {
           </h2>
 
           <p className="text-lg text-gray-400 max-w-xl leading-relaxed">
-            Stop losing memories to WhatsApp compression. Start your first Pixlane gallery in under 60 seconds — no credit card, no app, no limits.
+            Stop losing memories to WhatsApp compression. Start your first Pixlane gallery in under 60 seconds â€” no credit card, no app, no limits.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
-              href="/sign-up"
+              href="/auth?mode=signup"
               className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 font-black text-lg px-10 py-5 rounded-2xl shadow-2xl shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-105 transition-all duration-200"
             >
               Create Free Gallery <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
-              href="/sign-in"
+              href="/auth"
               className="inline-flex items-center justify-center gap-2 border border-white/15 text-white font-semibold text-lg px-10 py-5 rounded-2xl hover:bg-white/5 hover:border-white/25 transition-all duration-200"
             >
               Sign in
@@ -584,7 +584,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────────────── FOOTER ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <footer className="bg-gray-950 border-t border-white/5 py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo + tagline */}
@@ -602,22 +602,23 @@ export default function Home() {
 
           {/* Footer links */}
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
-            <Link href="/contact" className="hover:text-gray-300 transition-colors">Contact</Link>
-            <Link href="/blog" className="hover:text-gray-300 transition-colors">Blog</Link>
+            <Link href="#" className="hover:text-gray-300 transition-colors">Privacy</Link>
+            <Link href="#" className="hover:text-gray-300 transition-colors">Terms</Link>
+            <Link href="#" className="hover:text-gray-300 transition-colors">Contact</Link>
+            <Link href="#" className="hover:text-gray-300 transition-colors">Blog</Link>
           </div>
 
           {/* Made in SL */}
           <p className="text-sm text-gray-600">
-            Made with <span className="text-rose-400">❤️</span> in Sri Lanka 🇱🇰
+            Made with <span className="text-rose-400">â¤ï¸</span> in Sri Lanka ðŸ‡±ðŸ‡°
           </p>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 mt-8 pt-8 border-t border-white/5 text-center text-xs text-gray-700">
-          © {new Date().getFullYear()} Pixlane. All rights reserved.
+          Â© {new Date().getFullYear()} Pixlane. All rights reserved.
         </div>
       </footer>
     </div>
   );
 }
+
