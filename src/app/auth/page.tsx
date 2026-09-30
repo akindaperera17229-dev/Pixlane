@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { Camera, ArrowLeft, ArrowRight, Sparkles, Lock, Mail, User } from 'lucide-react'
 
 function AuthForm() {
@@ -26,27 +27,49 @@ function AuthForm() {
     setError('')
     setMessage('')
 
-    if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
-      })
-      if (error) {
-        setError(error.message)
+    try {
+      if (mode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { full_name: fullName.trim() } },
+        })
+
+        if (error) {
+          setError(error.message)
+        } else if (data?.session) {
+          // Email auto-confirmed (or email confirmation disabled in Supabase)
+          window.location.href = '/dashboard'
+          return
+        } else {
+          // Supabase project has "Confirm Email" turned ON
+          setMessage(
+            'Account created! Please check your email for the confirmation link. (Tip: You can disable "Confirm email" in your Supabase Auth dashboard for instant mobile signup).'
+          )
+        }
       } else {
-        setMessage('Check your email for a confirmation link to activate your account!')
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+
+        if (error) {
+          if (error.message.toLowerCase().includes('email not confirmed')) {
+            setError('Please confirm your email address before signing in, or turn off "Confirm email" in Supabase Auth Settings.')
+          } else {
+            setError(error.message)
+          }
+        } else {
+          // Hard navigation to guarantee cookies are flushed across mobile browsers and tunnels
+          window.location.href = '/dashboard'
+          return
+        }
       }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-      } else {
-        router.push('/dashboard')
-        router.refresh()
-      }
+    } catch (err: any) {
+      setError(err?.message || 'An unexpected error occurred. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -69,12 +92,9 @@ function AuthForm() {
       {/* Main Card */}
       <div className="w-full max-w-md mx-auto my-auto py-6">
         <div className="text-center mb-6">
-          <Link href="/" className="inline-flex items-center justify-center gap-2 mb-3 group">
-            <div className="w-11 h-11 bg-gradient-to-br from-[#FF7654] to-[#FFA387] rounded-2xl flex items-center justify-center text-white shadow-md shadow-[#FF7654]/30 group-hover:scale-105 transition-transform">
-              <Camera className="w-6 h-6" strokeWidth={2.5} />
-            </div>
-            <span className="text-2xl font-black text-[#221513] tracking-tight">Pixlane</span>
-          </Link>
+          <div className="flex justify-center mb-3">
+            <Logo size="lg" />
+          </div>
           <h1 className="text-2xl font-black text-[#221513] tracking-tight">
             {mode === 'signup' ? 'Create your host account' : 'Welcome back to Pixlane'}
           </h1>

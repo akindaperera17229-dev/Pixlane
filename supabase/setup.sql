@@ -32,21 +32,24 @@ create trigger on_auth_user_created
 
 -- ── 2. Events ────────────────────────────────────────────────
 create table if not exists public.events (
-  id           uuid primary key default gen_random_uuid(),
-  host_id      uuid not null references public.profiles(id) on delete cascade,
-  name         text not null,
-  description  text,
-  event_date   date,
-  code         text not null unique,
-  is_active    boolean default true not null,
-  photo_limit  integer default 30 not null,
-  created_at   timestamptz default now() not null
+  id              uuid primary key default gen_random_uuid(),
+  host_id         uuid not null references public.profiles(id) on delete cascade,
+  name            text not null,
+  description     text,
+  event_date      date,
+  code            text not null unique,
+  is_active       boolean default true not null,
+  photo_limit     integer default 30 not null,
+  video_limit     integer default 3 not null,
+  plan            text default 'free' not null,
+  theme_template  text default 'default' not null,
+  created_at      timestamptz default now() not null
 );
 
 create index if not exists events_host_id_idx on public.events(host_id);
 create index if not exists events_code_idx on public.events(code);
 
--- ── 3. Photos ────────────────────────────────────────────────
+-- ── 3. Photos / Media ────────────────────────────────────────
 create table if not exists public.photos (
   id             uuid primary key default gen_random_uuid(),
   event_id       uuid not null references public.events(id) on delete cascade,
@@ -54,6 +57,7 @@ create table if not exists public.photos (
   file_url       text not null,
   file_path      text not null,
   file_size      bigint not null,
+  media_type     text default 'photo' not null, -- 'photo' or 'video'
   uploaded_at    timestamptz default now() not null
 );
 
@@ -111,9 +115,6 @@ create policy "Hosts can delete photos from own events"
   );
 
 -- ── 5. Storage Bucket ─────────────────────────────────────────
--- Run this in Supabase Dashboard → Storage → New bucket
--- Name: "photos", Public: YES
--- OR run via SQL:
 insert into storage.buckets (id, name, public)
 values ('photos', 'photos', true)
 on conflict (id) do nothing;
@@ -131,15 +132,17 @@ create policy "Hosts can delete photos"
   on storage.objects for delete
   using (bucket_id = 'photos' and auth.uid() is not null);
 
--- ── 6. Realtime ───────────────────────────────────────────────
--- Enable realtime on photos table in Supabase Dashboard:
--- Database → Replication → Toggle "photos" table ON
--- (Cannot be done via SQL, must use the dashboard UI)
+-- ── 6. Migration for Existing Databases (Safe to run multiple times) ──
+alter table public.events add column if not exists video_limit integer default 3;
+alter table public.events add column if not exists plan text default 'free';
+alter table public.events add column if not exists theme_template text default 'default';
+alter table public.photos add column if not exists media_type text default 'photo';
+
+-- Force Supabase PostgREST to immediately refresh its schema cache
+notify pgrst, 'reload schema';
 
 -- ================================================================
--- DONE! Your Pixlane database is ready.
--- Next steps:
---   1. Go to Supabase → Storage → Create bucket named "photos" (public)
---   2. Go to Supabase → Database → Replication → enable "photos" table
---   3. Copy your project URL + anon key into .env.local
+-- Realtime:
+-- Enable realtime on photos table in Supabase Dashboard:
+-- Database → Replication → Toggle "photos" table ON
 -- ================================================================

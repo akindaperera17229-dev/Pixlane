@@ -39,6 +39,9 @@ export interface Database {
           code: string
           is_active: boolean
           photo_limit: number
+          video_limit?: number
+          plan?: string | null
+          theme_template?: string | null
           created_at: string
         }
         Insert: {
@@ -50,6 +53,9 @@ export interface Database {
           code: string
           is_active?: boolean
           photo_limit?: number
+          video_limit?: number
+          plan?: string | null
+          theme_template?: string | null
           created_at?: string
         }
         Update: {
@@ -61,6 +67,9 @@ export interface Database {
           code?: string
           is_active?: boolean
           photo_limit?: number
+          video_limit?: number
+          plan?: string | null
+          theme_template?: string | null
           created_at?: string
         }
       }
@@ -72,6 +81,7 @@ export interface Database {
           file_url: string
           file_path: string
           file_size: number
+          media_type?: string | null // 'photo' | 'video'
           uploaded_at: string
         }
         Insert: {
@@ -81,6 +91,7 @@ export interface Database {
           file_url: string
           file_path: string
           file_size: number
+          media_type?: string | null
           uploaded_at?: string
         }
         Update: {
@@ -90,6 +101,7 @@ export interface Database {
           file_url?: string
           file_path?: string
           file_size?: number
+          media_type?: string | null
           uploaded_at?: string
         }
       }

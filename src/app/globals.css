@@ -2,6 +2,9 @@
 
 @theme inline {
   --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-lora), Georgia, serif;
+  --font-cursive: var(--font-italianno), cursive;
+  --font-cinzel: var(--font-cinzel), serif;
   
   --color-peach-50: #FFF6F3;
   --color-peach-100: #FFEAE4;
@@ -28,9 +31,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  /* Disable tap delay & rubber-band horizontal scrolling for native mobile feel */
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Typography Utility Classes */
+h1, h2, h3, h4, .font-cinzel {
+  font-family: var(--font-cinzel), serif;
+  letter-spacing: 0.025em;
+}
+
+.font-lora {
+  font-family: var(--font-lora), Georgia, serif;
+}
+
+.font-cursive {
+  font-family: var(--font-italianno), cursive;
 }
 
 /* iOS Safe Area Padding Utilities */
@@ -87,4 +103,51 @@ html {
 
 .peach-pill-shadow {
   box-shadow: 0 10px 30px -8px rgba(255, 118, 84, 0.35);
+}
+
+/* ─── GPU-ACCELERATED KEYFRAMES FOR SUBTLE AMBIENT EFFECTS ─── */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(12px, -24px, 0) rotate(8deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale3d(1.08, 1.08, 1);
+  }
+}
+
+@keyframes discoSweep {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 6s ease-in-out infinite;
+}
+
+.animate-disco-sweep {
+  animation: discoSweep 20s linear infinite;
 }

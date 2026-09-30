@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Camera, Plus, Calendar, Images, ArrowRight, Sparkles, LogOut, QrCode } from 'lucide-react'
+import Logo from '@/components/Logo'
+import { Camera, Plus, Calendar, Images, ArrowRight, Sparkles, LogOut, QrCode, Crown, Film } from 'lucide-react'
 import { format } from 'date-fns'
 import { Event } from '@/types/database'
+import { getTheme } from '@/lib/themeEngine'
 
 async function signOut() {
   'use server'
@@ -35,13 +37,8 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-[#FFFDFB] text-[#221513] pb-24 md:pb-12">
       {/* ─── APP HEADER ─── */}
       <header className="bg-white border-b border-[#FFEAE4] sticky top-0 z-40 shadow-xs">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#FF7654] to-[#FFA387] flex items-center justify-center text-white shadow-xs">
-              <Camera className="w-5 h-5" strokeWidth={2.5} />
-            </div>
-            <span className="font-extrabold text-lg text-[#221513] tracking-tight">Pixlane</span>
-          </Link>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 min-h-16 sm:h-20 py-2.5 flex items-center justify-between">
+          <Logo size="responsive" href="/" />
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 bg-[#FFF6F3] border border-[#FFEAE4] px-3 py-1.5 rounded-full text-xs font-bold text-[#6E554F]">
@@ -153,38 +150,61 @@ export default async function DashboardPage() {
             {events.map((event) => {
               const photoCount = (event.photos as unknown as { count: number }[])?.[0]?.count ?? 0
               const percentage = Math.min((photoCount / event.photo_limit) * 100, 100)
+              const theme = getTheme(event.theme_template, event.name)
 
               return (
                 <Link
                   key={event.id}
                   href={`/dashboard/events/${event.id}`}
-                  className="group bg-white rounded-3xl border border-[#FFEAE4] hover:border-[#FFB7A2] p-5 shadow-xs hover:shadow-lg hover:shadow-[#FF7654]/10 transition-all duration-200 flex flex-col justify-between"
+                  className="group bg-white rounded-3xl border border-[#FFEAE4] hover:border-[#FFB7A2] p-5 shadow-xs hover:shadow-lg hover:shadow-[#FF7654]/10 transition-all duration-200 flex flex-col justify-between overflow-hidden relative"
                 >
+                  {/* Top Color Accent Strip based on Event Type */}
+                  <div
+                    className="h-1.5 w-full -mt-5 -mx-5 mb-3.5"
+                    style={{ backgroundColor: theme.colors.accent }}
+                  />
+
                   <div>
-                    {/* Header Row: Status & Code Badge */}
-                    <div className="flex items-center justify-between mb-3">
+                    {/* Header Row: Occasion Badge + Status */}
+                    <div className="flex items-center justify-between gap-2 mb-2.5">
                       <span
-                        className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${
-                          event.is_active
-                            ? 'bg-[#FFEAE4] text-[#D43E19]'
-                            : 'bg-gray-100 text-gray-500'
-                        }`}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border shadow-2xs"
+                        style={{
+                          backgroundColor: theme.colors.badgeBg,
+                          color: theme.colors.badgeFg,
+                          borderColor: theme.colors.border,
+                        }}
                       >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            event.is_active ? 'bg-[#FF7654] animate-pulse' : 'bg-gray-400'
-                          }`}
-                        />
-                        {event.is_active ? 'Accepting Photos' : 'Closed'}
+                        <span>{theme.emoji}</span>
+                        <span>{theme.name.split('&')[0].trim()}</span>
                       </span>
 
-                      <span className="font-mono text-xs font-bold text-[#6E554F] bg-[#FFF6F3] border border-[#FFEAE4] px-2 py-0.5 rounded-lg flex items-center gap-1">
-                        <QrCode className="w-3 h-3 text-[#FF7654]" />
-                        {event.code}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {event.plan && event.plan !== 'free' && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300">
+                            <Crown className="w-2.5 h-2.5 text-amber-600" />
+                            <span>{event.plan}</span>
+                          </span>
+                        )}
+
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            event.is_active
+                              ? 'bg-[#FFEAE4] text-[#D43E19]'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              event.is_active ? 'bg-[#FF7654] animate-pulse' : 'bg-gray-400'
+                            }`}
+                          />
+                          <span>{event.is_active ? 'Live' : 'Closed'}</span>
+                        </span>
+                      </div>
                     </div>
 
-                    <h3 className="font-extrabold text-base text-[#221513] group-hover:text-[#FF7654] transition-colors line-clamp-1 mb-1">
+                    <h3 className="font-cinzel font-bold text-base text-[#221513] group-hover:text-[#FF7654] transition-colors line-clamp-1 mb-1">
                       {event.name}
                     </h3>
 
@@ -194,12 +214,18 @@ export default async function DashboardPage() {
                       </p>
                     )}
 
-                    <div className="flex items-center gap-1.5 text-xs text-[#6E554F] mb-4">
-                      <Calendar className="w-3.5 h-3.5 text-[#FF7654]" />
-                      <span>
-                        {event.event_date
-                          ? format(new Date(event.event_date), 'MMM d, yyyy')
-                          : 'No date specified'}
+                    <div className="flex items-center justify-between text-xs text-[#6E554F] mb-4">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#FF7654]" />
+                        <span>
+                          {event.event_date
+                            ? format(new Date(event.event_date), 'MMM d, yyyy')
+                            : 'No date'}
+                        </span>
+                      </div>
+
+                      <span className="font-mono text-[11px] font-bold text-[#6E554F] bg-[#FFF6F3] border border-[#FFEAE4] px-1.5 py-0.5 rounded-md">
+                        {event.code}
                       </span>
                     </div>
                   </div>
@@ -209,17 +235,21 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between text-xs font-bold mb-1.5">
                       <span className="flex items-center gap-1 text-[#FF7654]">
                         <Images className="w-3.5 h-3.5" />
-                        <span>{photoCount} photos</span>
+                        <span>{photoCount} / {event.photo_limit} photos</span>
                       </span>
-                      <span className="text-[#6E554F] font-normal">
-                        Max {event.photo_limit}
+                      <span className="text-[#6E554F] font-normal flex items-center gap-1">
+                        <Film className="w-3 h-3 text-[#FFA387]" />
+                        <span>Max {event.video_limit ?? 3} vids</span>
                       </span>
                     </div>
 
                     <div className="w-full bg-[#FFF6F3] rounded-full h-2 overflow-hidden border border-[#FFEAE4]">
                       <div
-                        className="bg-gradient-to-r from-[#FF7654] to-[#FFA387] h-full rounded-full transition-all duration-300"
-                        style={{ width: `${percentage}%` }}
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${percentage}%`,
+                          backgroundColor: theme.colors.accent,
+                        }}
                       />
                     </div>
                   </div>

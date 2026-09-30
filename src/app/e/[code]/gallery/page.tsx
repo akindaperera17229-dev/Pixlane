@@ -1,4 +1,4 @@
-import GalleryPage from './GalleryPage'
+import { redirect } from 'next/navigation'
 
 export default async function GalleryRoute({
   params,
@@ -6,5 +6,5 @@ export default async function GalleryRoute({
   params: Promise<{ code: string }>
 }) {
   const { code } = await params
-  return <GalleryPage code={code} />
+  redirect(`/e/${code}`)
 }
