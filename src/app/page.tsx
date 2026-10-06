@@ -727,22 +727,26 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Bottom Bar: Copyright & Payment Channels */}
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-            <p className="text-[#6E554F]">
+          {/* Bottom Bar: Copyright, Policies & Payment Channels */}
+          <div className="pt-8 border-t border-[#FFEAE4]/60 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+            <p className="text-[#6E554F] text-center md:text-left">
               &copy; {new Date().getFullYear()} Pixlane. All rights reserved. Memories in Every Angle.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-semibold">
-              <span className="text-[#6E554F]">Accepted in Sri Lanka:</span>
-              <span className="font-mono text-[11px] bg-white px-2 py-0.5 rounded-md border border-[#FFD5C8] text-[#221513]">
+            {/* Legal eCommerce Policies (Bank Review Requirements) */}
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#6E554F]">
+              <Link href="/terms" className="hover:text-[#FF7654] transition-colors underline">Terms &amp; Conditions</Link>
+              <span>&bull;</span>
+              <Link href="/privacy" className="hover:text-[#FF7654] transition-colors underline">Privacy Policy</Link>
+              <span>&bull;</span>
+              <Link href="/refund-policy" className="hover:text-[#FF7654] transition-colors underline">Refund Policy</Link>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <span className="font-mono text-[11px] bg-white px-2.5 py-1 rounded-md border border-[#FFD5C8] text-[#221513]">
                 Visa &bull; MasterCard &bull; FriMi &bull; Genie &bull; eZ Cash
               </span>
             </div>
-
-            <p className="text-xs text-[#6E554F] flex items-center gap-1">
-              Made with <Heart className="w-3.5 h-3.5 text-[#FF7654] fill-current" /> in Sri Lanka 🇱🇰
-            </p>
           </div>
         </div>
       </footer>
