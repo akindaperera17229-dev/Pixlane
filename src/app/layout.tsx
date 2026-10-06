@@ -34,6 +34,7 @@ const cinzel = Cinzel_Decorative({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://pixlane.site'),
   title: 'Pixlane — Every angle. One place.',
   description: "Capture & collect high-res memories from every friend without quality loss. Zero app download required.",
   manifest: '/manifest.json',

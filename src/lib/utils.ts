@@ -19,6 +19,6 @@ export function formatBytes(bytes: number): string {
 
 /** Get the public URL for an event's share link */
 export function getEventUrl(code: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  return `${base}/e/${code}`
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://pixlane.site'
+  return `${base.replace(/\/+$/, '')}/e/${code}`
 }

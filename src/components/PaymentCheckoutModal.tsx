@@ -171,14 +171,17 @@ export default function PaymentCheckoutModal({
         throw new Error(hashData.error || 'Failed to initialize payment gateway')
       }
 
-      // Step 2: If PayHere JS SDK is loaded, launch the official popup modal
+      // Step 2: Ensure PayHere JS SDK is loaded and launch the official popup modal
       if (typeof window !== 'undefined' && (window as any).payhere) {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin || 'https://pixlane.site'
+        const cleanBase = baseUrl.replace(/\/+$/, '')
+
         const payment = {
           sandbox: hashData.isSandbox,
           merchant_id: hashData.merchantId,
-          return_url: window.location.href,
-          cancel_url: window.location.href,
-          notify_url: `${window.location.origin}/api/payhere/notify`,
+          return_url: `${cleanBase}/dashboard`,
+          cancel_url: `${cleanBase}/dashboard`,
+          notify_url: `${cleanBase}/api/payhere/notify`,
           order_id: orderId,
           items: `${plan.name} (${eventName})`,
           amount: hashData.amount,
@@ -197,6 +200,7 @@ export default function PaymentCheckoutModal({
 
         ;(window as any).payhere.onCompleted = async function onCompleted(orderIdRet: string) {
           console.log('PayHere payment completed:', orderIdRet)
+          // Securely upgrade database plan once payment is verified
           await upgradePlanInDatabase()
         }
 
@@ -205,14 +209,17 @@ export default function PaymentCheckoutModal({
         }
 
         ;(window as any).payhere.onError = function onError(errorMsg: string) {
-          setError(`PayHere Error: ${errorMsg}`)
+          setError(`PayHere payment error: ${errorMsg}`)
           setProcessing(false)
         }
 
         ;(window as any).payhere.startPayment(payment)
       } else {
-        // Fallback if script is blocked or offline
-        await upgradePlanInDatabase()
+        // Strict security: Never activate plans without verified gateway payment
+        setError(
+          'PayHere payment gateway is currently initializing. Please check your internet connection or ad-blocker settings and click Pay again.'
+        )
+        setProcessing(false)
       }
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred during PayHere checkout.')
