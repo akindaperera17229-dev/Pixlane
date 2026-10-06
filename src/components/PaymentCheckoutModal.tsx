@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   X,
   Crown,
@@ -18,8 +18,8 @@ import {
   Smartphone,
   Mail,
   User,
+  AlertTriangle,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import Logo from './Logo'
 
 export interface PaymentModalProps {
@@ -48,12 +48,22 @@ export default function PaymentCheckoutModal({
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [processing, setProcessing] = useState(false)
+  const [verificationStatus, setVerificationStatus] = useState('')
   const [error, setError] = useState('')
 
-  const supabase = createClient()
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Clear polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current)
+      }
+    }
+  }, [])
 
   // Inject PayHere Lightbox SDK script dynamically
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined' && !(window as any).payhere) {
       const script = document.createElement('script')
       script.src = 'https://www.payhere.lk/lib/payhere.js'
@@ -106,51 +116,10 @@ export default function PaymentCheckoutModal({
   const plan = planDetails[selectedPlan]
   const orderId = `PIX-${selectedPlan.toUpperCase()}-${(eventId || 'DEMO').slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`
 
-  async function upgradePlanInDatabase() {
-    if (eventId) {
-      // Upgrade database records in Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let res = await (supabase as any)
-        .from('events')
-        .update({
-          plan: selectedPlan,
-          photo_limit: plan.photoLimit,
-          video_limit: plan.videoLimit,
-        })
-        .eq('id', eventId)
-        .select()
-        .single()
-
-      if (res.error && (res.error.message?.includes('schema cache') || res.error.message?.includes('column') || res.error.code === 'PGRST204')) {
-        // Fallback if table doesn't have plan column yet
-        res = await (supabase as any)
-          .from('events')
-          .update({
-            photo_limit: plan.photoLimit,
-          })
-          .eq('id', eventId)
-          .select()
-          .single()
-      }
-
-      if (res.error) {
-        setError(res.error.message)
-        setProcessing(false)
-        return
-      }
-    }
-
-    if (onSuccess) {
-      onSuccess(selectedPlan, plan.photoLimit, plan.videoLimit)
-    }
-
-    setStep('success')
-    setProcessing(false)
-  }
-
   async function handlePayHereCheckout(e: React.FormEvent) {
     e.preventDefault()
     setProcessing(true)
+    setVerificationStatus('Connecting to PayHere gateway...')
     setError('')
 
     try {
@@ -171,10 +140,10 @@ export default function PaymentCheckoutModal({
         throw new Error(hashData.error || 'Failed to initialize payment gateway')
       }
 
-      // Step 2: Ensure PayHere JS SDK is loaded and launch the official popup modal
+      // Step 2: Ensure PayHere JS SDK is loaded and launch popup
       if (typeof window !== 'undefined' && (window as any).payhere) {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin || 'https://pixlane.site'
-        const cleanBase = baseUrl.replace(/\/+$/, '')
+        // Guaranteed production base domain for return & webhook notifications
+        const cleanBase = 'https://pixlane.site'
 
         const payment = {
           sandbox: hashData.isSandbox,
@@ -198,32 +167,87 @@ export default function PaymentCheckoutModal({
           custom_2: selectedPlan,
         }
 
-        ;(window as any).payhere.onCompleted = async function onCompleted(orderIdRet: string) {
-          console.log('PayHere payment completed:', orderIdRet)
-          // Securely upgrade database plan once payment is verified
-          await upgradePlanInDatabase()
+        // PayHere onCompleted callback:
+        // IMPORTANT: In PayHere JS SDK, onCompleted fires when the popup finishes,
+        // REGARDLESS of whether the bank approved (status: 2) or declined (status: -2).
+        // Therefore, we NEVER directly update the database here.
+        // We poll the backend /api/payhere/verify to check if the server IPN confirmed approval.
+        ;(window as any).payhere.onCompleted = function onCompleted(orderIdRet: string) {
+          console.log('PayHere checkout window completed for order:', orderIdRet || orderId)
+          setProcessing(true)
+          setVerificationStatus('Verifying payment with PayHere and bank...')
+
+          let attempts = 0
+          const maxAttempts = 7
+          const pollIntervalMs = 1500
+
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+
+          pollTimerRef.current = setInterval(async () => {
+            attempts++
+            try {
+              const verifyRes = await fetch(
+                `/api/payhere/verify?eventId=${eventId}&plan=${selectedPlan}`
+              )
+              const verifyData = await verifyRes.json()
+
+              if (verifyData.verified) {
+                // Payment confirmed as approved by server IPN webhook!
+                if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+                if (onSuccess) {
+                  onSuccess(
+                    selectedPlan,
+                    verifyData.photoLimit ?? plan.photoLimit,
+                    verifyData.videoLimit ?? plan.videoLimit
+                  )
+                }
+                setStep('success')
+                setProcessing(false)
+                setVerificationStatus('')
+                return
+              }
+            } catch (vErr) {
+              console.error('Polling payment verification failed:', vErr)
+            }
+
+            if (attempts >= maxAttempts) {
+              // If not verified after polling, the payment was declined or failed!
+              if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+              setProcessing(false)
+              setVerificationStatus('')
+              setError(
+                'Payment was declined, cancelled, or not approved by the bank. Your event plan remains on the Free tier. If your card was debited, please contact support with Order ID: ' +
+                  (orderIdRet || orderId)
+              )
+            }
+          }, pollIntervalMs)
         }
 
         ;(window as any).payhere.onDismissed = function onDismissed() {
+          console.log('PayHere payment window dismissed by user')
           setProcessing(false)
+          setVerificationStatus('')
         }
 
         ;(window as any).payhere.onError = function onError(errorMsg: string) {
+          console.error('PayHere payment error:', errorMsg)
           setError(`PayHere payment error: ${errorMsg}`)
           setProcessing(false)
+          setVerificationStatus('')
         }
 
         ;(window as any).payhere.startPayment(payment)
       } else {
-        // Strict security: Never activate plans without verified gateway payment
         setError(
-          'PayHere payment gateway is currently initializing. Please check your internet connection or ad-blocker settings and click Pay again.'
+          'PayHere payment gateway is currently initializing. Please check your internet connection and try again in a few seconds.'
         )
         setProcessing(false)
+        setVerificationStatus('')
       }
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred during PayHere checkout.')
       setProcessing(false)
+      setVerificationStatus('')
     }
   }
 
@@ -298,14 +322,14 @@ export default function PaymentCheckoutModal({
                 <div className="bg-white/80 p-2 rounded-xl border border-[#FFEAE4]">
                   <Images className="w-4 h-4 text-[#FF7654] mx-auto mb-1" />
                   <span className="text-xs font-black text-[#221513] block">
-                    {selectedPlan === 'wedding' ? 'UNLIMITED' : '250'}
+                    {selectedPlan === 'wedding' ? 'UNLIMITED' : '300'}
                   </span>
                   <span className="text-[10px] text-[#6E554F]">Photos</span>
                 </div>
                 <div className="bg-white/80 p-2 rounded-xl border border-[#FFEAE4]">
                   <Film className="w-4 h-4 text-[#FF7654] mx-auto mb-1" />
                   <span className="text-xs font-black text-[#221513] block">
-                    {selectedPlan === 'wedding' ? 'UNLIMITED' : '15 HD'}
+                    {selectedPlan === 'wedding' ? 'UNLIMITED' : '30 HD'}
                   </span>
                   <span className="text-[10px] text-[#6E554F]">Videos</span>
                 </div>
@@ -339,6 +363,30 @@ export default function PaymentCheckoutModal({
                 CBSL Approved
               </span>
             </div>
+
+            {/* Verification In-Progress Notice */}
+            {processing && verificationStatus && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl mb-4 flex items-center gap-3">
+                <Loader2 className="w-5 h-5 text-amber-600 animate-spin shrink-0" />
+                <div className="text-xs">
+                  <p className="font-bold text-amber-900">{verificationStatus}</p>
+                  <p className="text-amber-700 text-[11px] mt-0.5">
+                    Awaiting server confirmation from PayHere. Do not close this tab.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Error / Declined Alert */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-2xl mb-4 flex items-start gap-2.5">
+                <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block font-bold text-red-800">Transaction Not Approved</strong>
+                  <p className="text-red-700 mt-0.5 leading-relaxed">{error}</p>
+                </div>
+              </div>
+            )}
 
             {/* Checkout Form */}
             <form onSubmit={handlePayHereCheckout} className="space-y-3.5">
@@ -395,12 +443,6 @@ export default function PaymentCheckoutModal({
                 </div>
               </div>
 
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-2xl">
-                  {error}
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={processing}
@@ -409,7 +451,7 @@ export default function PaymentCheckoutModal({
                 {processing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Connecting to PayHere ({plan.priceFormatted})...</span>
+                    <span>{verificationStatus || `Connecting to PayHere (${plan.priceFormatted})...`}</span>
                   </>
                 ) : (
                   <>

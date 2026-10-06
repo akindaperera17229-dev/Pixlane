@@ -68,6 +68,10 @@ export async function POST(request: Request) {
       }
 
       console.log(`Successfully upgraded event ${custom_1} to ${plan} plan via PayHere IPN!`)
+    } else {
+      console.warn(
+        `PayHere IPN Payment Declined/Unsuccessful: Order ${order_id}, Status: ${status_code}, Event: ${custom_1}. Plan was NOT modified.`
+      )
     }
 
     return NextResponse.json({ received: true }, { status: 200 })

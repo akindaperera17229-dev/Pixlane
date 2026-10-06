@@ -310,36 +310,47 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
     if (data) setEvent(data as Event)
   }
 
-  async function handlePlanUpgrade(planId: 'free' | 'pro' | 'wedding') {
+  async function handlePlanSelect(
+    planId: 'free' | 'pro' | 'wedding',
+    photoLimit?: number,
+    videoLimit?: number
+  ) {
     if (!event) return
-    const photoLimit = planId === 'wedding' ? 9999 : planId === 'pro' ? 300 : 60
-    const videoLimit = planId === 'wedding' ? 9999 : planId === 'pro' ? 30 : 10
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let res = await (supabase as any)
-      .from('events')
-      .update({
-        plan: planId,
-        photo_limit: photoLimit,
-        video_limit: videoLimit,
-      })
-      .eq('id', event.id)
-      .select()
-      .single()
-
-    if (res.error && (res.error.message?.includes('schema cache') || res.error.message?.includes('column') || res.error.code === 'PGRST204')) {
-      // Fallback: update only photo_limit if plan/video_limit columns are not migrated yet
-      res = await (supabase as any)
+    if (planId === 'free') {
+      // Downgrade or keep on free plan
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
         .from('events')
         .update({
-          photo_limit: photoLimit,
+          plan: 'free',
+          photo_limit: 60,
+          video_limit: 10,
         })
         .eq('id', event.id)
         .select()
         .single()
+      if (data) setEvent(data as Event)
+      return
     }
 
-    if (res.data) setEvent(res.data as Event)
+    // For paid plans ('pro' | 'wedding'):
+    // The plan is verified and activated via the server IPN webhook.
+    // Apply the verified limits directly to local state
+    const resolvedPhotoLimit = photoLimit ?? (planId === 'wedding' ? 9999 : 300)
+    const resolvedVideoLimit = videoLimit ?? (planId === 'wedding' ? 9999 : 30)
+
+    setEvent((prev) =>
+      prev
+        ? {
+            ...prev,
+            plan: planId,
+            photo_limit: resolvedPhotoLimit,
+            video_limit: resolvedVideoLimit,
+          }
+        : prev
+    )
+    fetchPhotos()
   }
 
   async function deletePhoto(photo: Photo) {
@@ -512,8 +523,10 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
 
               <Link
                 href={`/e/${event.code}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center justify-center w-10 bg-[#FFF6F3] text-[#6E554F] hover:text-[#221513] rounded-xl border border-[#FFEAE4] transition-colors"
-                title="Open Public Guest Page"
+                title="Open Public Guest Page (pixlane.site)"
               >
                 <ExternalLink className="w-4 h-4" />
               </Link>
@@ -975,7 +988,9 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
         currentPlan={event.plan || 'free'}
         eventId={event.id}
         eventName={event.name}
-        onSelectPlan={(plan) => handlePlanUpgrade(plan)}
+        onSelectPlan={(plan, photoLimit, videoLimit) =>
+          handlePlanSelect(plan, photoLimit, videoLimit)
+        }
       />
     </div>
   )

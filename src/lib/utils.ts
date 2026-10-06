@@ -17,8 +17,11 @@ export function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
-/** Get the public URL for an event's share link */
+/**
+ * Official production URL for all guest-facing share links and QR codes.
+ * Guaranteed to route to https://pixlane.site/e/{code} so that printed QR codes,
+ * WhatsApp invitations, and table stands work seamlessly on any guest's device.
+ */
 export function getEventUrl(code: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://pixlane.site'
-  return `${base.replace(/\/+$/, '')}/e/${code}`
+  return `https://pixlane.site/e/${code}`
 }

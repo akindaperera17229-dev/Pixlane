@@ -7,7 +7,11 @@ import PaymentCheckoutModal from './PaymentCheckoutModal'
 interface PricingModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelectPlan?: (planId: 'free' | 'pro' | 'wedding') => void
+  onSelectPlan?: (
+    planId: 'free' | 'pro' | 'wedding',
+    photoLimit?: number,
+    videoLimit?: number
+  ) => void
   currentPlan?: string
   eventId?: string
   eventName?: string
@@ -105,8 +109,8 @@ export default function PricingModal({
         eventId={eventId}
         eventName={eventName}
         initialPlan={checkoutPlan}
-        onSuccess={(upgradedPlan) => {
-          if (onSelectPlan) onSelectPlan(upgradedPlan)
+        onSuccess={(upgradedPlan, photoLimit, videoLimit) => {
+          if (onSelectPlan) onSelectPlan(upgradedPlan, photoLimit, videoLimit)
           setCheckoutPlan(null)
           onClose()
         }}
