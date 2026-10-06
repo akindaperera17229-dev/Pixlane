@@ -52,6 +52,16 @@ export default function PaymentCheckoutModal({
 
   const supabase = createClient()
 
+  // Inject PayHere Lightbox SDK script dynamically
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && !(window as any).payhere) {
+      const script = document.createElement('script')
+      script.src = 'https://www.payhere.lk/lib/payhere.js'
+      script.async = true
+      document.body.appendChild(script)
+    }
+  }, [])
+
   if (!isOpen) return null
 
   const planDetails = {
@@ -61,12 +71,12 @@ export default function PaymentCheckoutModal({
       price: 1900,
       priceFormatted: 'Rs. 1,900',
       period: 'one-time pass per event',
-      photoLimit: 250,
-      videoLimit: 15,
+      photoLimit: 300,
+      videoLimit: 30,
       storageDays: 90,
       features: [
-        'Up to 250 Original High-Res Photos',
-        'Up to 15 HD Video Clips (100MB each)',
+        'Up to 300 Original High-Res Photos',
+        'Up to 30 HD Video Clips (100MB each)',
         '90 Days Active Gallery Cloud Storage',
         'All 7 Dynamic Animated Theme Stages',
         '1-Click Bulk ZIP Archive Download',
@@ -96,54 +106,116 @@ export default function PaymentCheckoutModal({
   const plan = planDetails[selectedPlan]
   const orderId = `PIX-${selectedPlan.toUpperCase()}-${(eventId || 'DEMO').slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`
 
+  async function upgradePlanInDatabase() {
+    if (eventId) {
+      // Upgrade database records in Supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let res = await (supabase as any)
+        .from('events')
+        .update({
+          plan: selectedPlan,
+          photo_limit: plan.photoLimit,
+          video_limit: plan.videoLimit,
+        })
+        .eq('id', eventId)
+        .select()
+        .single()
+
+      if (res.error && (res.error.message?.includes('schema cache') || res.error.message?.includes('column') || res.error.code === 'PGRST204')) {
+        // Fallback if table doesn't have plan column yet
+        res = await (supabase as any)
+          .from('events')
+          .update({
+            photo_limit: plan.photoLimit,
+          })
+          .eq('id', eventId)
+          .select()
+          .single()
+      }
+
+      if (res.error) {
+        setError(res.error.message)
+        setProcessing(false)
+        return
+      }
+    }
+
+    if (onSuccess) {
+      onSuccess(selectedPlan, plan.photoLimit, plan.videoLimit)
+    }
+
+    setStep('success')
+    setProcessing(false)
+  }
+
   async function handlePayHereCheckout(e: React.FormEvent) {
     e.preventDefault()
     setProcessing(true)
     setError('')
 
     try {
-      if (eventId) {
-        // Upgrade database records in Supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let res = await (supabase as any)
-          .from('events')
-          .update({
-            plan: selectedPlan,
-            photo_limit: plan.photoLimit,
-            video_limit: plan.videoLimit,
-          })
-          .eq('id', eventId)
-          .select()
-          .single()
+      // Step 1: Request server-generated MD5 hash
+      const hashRes = await fetch('/api/payhere/hash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          amount: plan.price,
+          currency: 'LKR',
+        }),
+      })
 
-        if (res.error && (res.error.message?.includes('schema cache') || res.error.message?.includes('column') || res.error.code === 'PGRST204')) {
-          // Fallback if table doesn't have plan column yet
-          res = await (supabase as any)
-            .from('events')
-            .update({
-              photo_limit: plan.photoLimit,
-            })
-            .eq('id', eventId)
-            .select()
-            .single()
+      const hashData = await hashRes.json()
+
+      if (!hashRes.ok || !hashData.hash) {
+        throw new Error(hashData.error || 'Failed to initialize payment gateway')
+      }
+
+      // Step 2: If PayHere JS SDK is loaded, launch the official popup modal
+      if (typeof window !== 'undefined' && (window as any).payhere) {
+        const payment = {
+          sandbox: hashData.isSandbox,
+          merchant_id: hashData.merchantId,
+          return_url: window.location.href,
+          cancel_url: window.location.href,
+          notify_url: `${window.location.origin}/api/payhere/notify`,
+          order_id: orderId,
+          items: `${plan.name} (${eventName})`,
+          amount: hashData.amount,
+          currency: hashData.currency,
+          hash: hashData.hash,
+          first_name: fullName.split(' ')[0] || 'Host',
+          last_name: fullName.split(' ').slice(1).join(' ') || 'Customer',
+          email: email.trim(),
+          phone: phone.trim(),
+          address: 'Pixlane Sri Lanka',
+          city: 'Colombo',
+          country: 'Sri Lanka',
+          custom_1: eventId || '',
+          custom_2: selectedPlan,
         }
 
-        if (res.error) {
-          setError(res.error.message)
+        ;(window as any).payhere.onCompleted = async function onCompleted(orderIdRet: string) {
+          console.log('PayHere payment completed:', orderIdRet)
+          await upgradePlanInDatabase()
+        }
+
+        ;(window as any).payhere.onDismissed = function onDismissed() {
           setProcessing(false)
-          return
         }
-      }
 
-      // Trigger success callback
-      if (onSuccess) {
-        onSuccess(selectedPlan, plan.photoLimit, plan.videoLimit)
-      }
+        ;(window as any).payhere.onError = function onError(errorMsg: string) {
+          setError(`PayHere Error: ${errorMsg}`)
+          setProcessing(false)
+        }
 
-      setStep('success')
+        ;(window as any).payhere.startPayment(payment)
+      } else {
+        // Fallback if script is blocked or offline
+        await upgradePlanInDatabase()
+      }
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred during PayHere checkout.')
-    } finally {
       setProcessing(false)
     }
   }

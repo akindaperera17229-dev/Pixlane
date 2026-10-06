@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Plus_Jakarta_Sans, Lora, Italianno, Cinzel_Decorative } from 'next/font/google'
 import './globals.css'
 
@@ -75,6 +76,7 @@ export default function RootLayout({
     >
       <body className="font-sans bg-[#FFFDFB] text-[#221513] antialiased selection:bg-[#FFEAE4] selection:text-[#D43E19]">
         {children}
+        <Script src="https://www.payhere.lk/lib/payhere.js" strategy="lazyOnload" />
       </body>
     </html>
   )

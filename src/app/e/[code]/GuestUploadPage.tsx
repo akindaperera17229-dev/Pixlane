@@ -159,42 +159,98 @@ export default function GuestUploadPage({ code }: GuestUploadPageProps) {
     let count = 0
 
     const currentVideosInBatch = files.filter((f) => f.type.startsWith('video/')).length
+    const currentPhotosInBatch = files.length - currentVideosInBatch
     const currentUploadedVideos = photos.filter((p) => p.media_type === 'video').length
-    const allowedVideoLimit = event.video_limit ?? 3
+    const currentUploadedPhotos = photos.filter((p) => p.media_type !== 'video').length
+    const allowedVideoLimit = event.video_limit ?? 10
+    const allowedPhotoLimit = event.photo_limit ?? 60
 
-    if (currentUploadedVideos + currentVideosInBatch > allowedVideoLimit) {
-      setError(
-        `This album allows up to ${allowedVideoLimit} videos on its plan (${currentUploadedVideos} already uploaded). Please remove some videos or ask the host to upgrade!`
-      )
-      setUploading(false)
-      return
+    if (event.plan !== 'wedding') {
+      if (currentUploadedVideos + currentVideosInBatch > allowedVideoLimit) {
+        setError(
+          `This album allows up to ${allowedVideoLimit} videos on its plan (${currentUploadedVideos} already uploaded). Please remove some videos or ask the host to upgrade!`
+        )
+        setUploading(false)
+        return
+      }
+
+      if (currentUploadedPhotos + currentPhotosInBatch > allowedPhotoLimit) {
+        setError(
+          `This album allows up to ${allowedPhotoLimit} photos on its plan (${currentUploadedPhotos} already uploaded). Please remove some photos or ask the host to upgrade!`
+        )
+        setUploading(false)
+        return
+      }
     }
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/')
       const mediaType = isVideo ? 'video' : 'photo'
-      const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
-      const path = `${event.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      let publicFileUrl = ''
+      let storagePath = ''
 
-      const { error: storageErr } = await supabase.storage
-        .from('photos')
-        .upload(path, file, { cacheControl: '3600', upsert: false })
+      // Attempt Cloudflare R2 direct pre-signed upload
+      try {
+        const presignRes = await fetch('/api/storage/presign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: event.id,
+            fileName: file.name,
+            contentType: file.type,
+            fileSize: file.size,
+          }),
+        })
 
-      if (storageErr) {
-        setError(`Upload stopped: ${storageErr.message}`)
-        break
+        const presignData = await presignRes.json()
+
+        if (presignData.enabled && presignData.uploadUrl) {
+          // Direct upload from browser to Cloudflare R2 bucket
+          const uploadRes = await fetch(presignData.uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+            body: file,
+          })
+
+          if (!uploadRes.ok) {
+            throw new Error(`R2 upload failed with status ${uploadRes.status}`)
+          }
+
+          publicFileUrl = presignData.publicUrl
+          storagePath = presignData.filePath
+        }
+      } catch (r2Err) {
+        console.warn('R2 upload skipped or failed, falling back to Supabase:', r2Err)
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('photos').getPublicUrl(path)
+      // If not uploaded to R2, fallback to Supabase Storage
+      if (!publicFileUrl) {
+        const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
+        storagePath = `${event.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+        const { error: storageErr } = await supabase.storage
+          .from('photos')
+          .upload(storagePath, file, { cacheControl: '3600', upsert: false })
+
+        if (storageErr) {
+          setError(`Upload stopped: ${storageErr.message}`)
+          break
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('photos').getPublicUrl(storagePath)
+        publicFileUrl = publicUrl
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let insertRes = await (supabase.from('photos') as any).insert({
         event_id: event.id,
         uploader_name: uploaderName.trim(),
-        file_url: publicUrl,
-        file_path: path,
+        file_url: publicFileUrl,
+        file_path: storagePath,
         file_size: file.size,
         media_type: mediaType,
       })
@@ -204,8 +260,8 @@ export default function GuestUploadPage({ code }: GuestUploadPageProps) {
         insertRes = await (supabase.from('photos') as any).insert({
           event_id: event.id,
           uploader_name: uploaderName.trim(),
-          file_url: publicUrl,
-          file_path: path,
+          file_url: publicFileUrl,
+          file_path: storagePath,
           file_size: file.size,
         })
       }

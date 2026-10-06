@@ -152,31 +152,99 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
     setHostUploadError('')
     let count = 0
 
+    const currentVideosInBatch = hostFiles.filter((f) => f.type.startsWith('video/')).length
+    const currentPhotosInBatch = hostFiles.length - currentVideosInBatch
+    const currentUploadedVideos = photos.filter((p) => p.media_type === 'video').length
+    const currentUploadedPhotos = photos.filter((p) => p.media_type !== 'video').length
+    const allowedVideoLimit = event.video_limit ?? 10
+    const allowedPhotoLimit = event.photo_limit ?? 60
+
+    if (event.plan !== 'wedding') {
+      if (currentUploadedVideos + currentVideosInBatch > allowedVideoLimit) {
+        setHostUploadError(
+          `Video limit reached (${allowedVideoLimit} videos on your plan). Upgrade to add more videos!`
+        )
+        setHostUploading(false)
+        return
+      }
+
+      if (currentUploadedPhotos + currentPhotosInBatch > allowedPhotoLimit) {
+        setHostUploadError(
+          `Photo limit reached (${allowedPhotoLimit} photos on your plan). Upgrade to add more photos!`
+        )
+        setHostUploading(false)
+        return
+      }
+    }
+
     for (const file of hostFiles) {
       const isVideo = file.type.startsWith('video/')
       const mediaType = isVideo ? 'video' : 'photo'
-      const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
-      const path = `${event.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      let publicFileUrl = ''
+      let storagePath = ''
 
-      const { error: storageErr } = await supabase.storage
-        .from('photos')
-        .upload(path, file, { cacheControl: '3600', upsert: false })
+      // Attempt Cloudflare R2 direct pre-signed upload
+      try {
+        const presignRes = await fetch('/api/storage/presign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: event.id,
+            fileName: file.name,
+            contentType: file.type,
+            fileSize: file.size,
+          }),
+        })
 
-      if (storageErr) {
-        setHostUploadError(`Upload stopped: ${storageErr.message}`)
-        break
+        const presignData = await presignRes.json()
+
+        if (presignData.enabled && presignData.uploadUrl) {
+          // Direct upload from browser to Cloudflare R2 bucket
+          const uploadRes = await fetch(presignData.uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+            body: file,
+          })
+
+          if (!uploadRes.ok) {
+            throw new Error(`R2 upload failed with status ${uploadRes.status}`)
+          }
+
+          publicFileUrl = presignData.publicUrl
+          storagePath = presignData.filePath
+        }
+      } catch (r2Err) {
+        console.warn('R2 host upload skipped or failed, falling back to Supabase:', r2Err)
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('photos').getPublicUrl(path)
+      // If not uploaded to R2, fallback to Supabase Storage
+      if (!publicFileUrl) {
+        const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
+        storagePath = `${event.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+        const { error: storageErr } = await supabase.storage
+          .from('photos')
+          .upload(storagePath, file, { cacheControl: '3600', upsert: false })
+
+        if (storageErr) {
+          setHostUploadError(`Upload stopped: ${storageErr.message}`)
+          break
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('photos').getPublicUrl(storagePath)
+        publicFileUrl = publicUrl
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let insertRes = await (supabase.from('photos') as any).insert({
         event_id: event.id,
         uploader_name: 'Host 👑',
-        file_url: publicUrl,
-        file_path: path,
+        file_url: publicFileUrl,
+        file_path: storagePath,
         file_size: file.size,
         media_type: mediaType,
       })
@@ -186,8 +254,8 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
         insertRes = await (supabase.from('photos') as any).insert({
           event_id: event.id,
           uploader_name: 'Host 👑',
-          file_url: publicUrl,
-          file_path: path,
+          file_url: publicFileUrl,
+          file_path: storagePath,
           file_size: file.size,
         })
       }
@@ -244,8 +312,8 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
 
   async function handlePlanUpgrade(planId: 'free' | 'pro' | 'wedding') {
     if (!event) return
-    const photoLimit = planId === 'wedding' ? 9999 : planId === 'pro' ? 250 : 30
-    const videoLimit = planId === 'wedding' ? 9999 : planId === 'pro' ? 15 : 3
+    const photoLimit = planId === 'wedding' ? 9999 : planId === 'pro' ? 300 : 60
+    const videoLimit = planId === 'wedding' ? 9999 : planId === 'pro' ? 30 : 10
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let res = await (supabase as any)
@@ -517,6 +585,26 @@ export default function EventDetailClient({ eventId }: EventDetailClientProps) {
                 />
               </div>
             </div>
+
+            {/* Plan Limit Alert & Instant Upgrade Button */}
+            {(totalPhotos >= event.photo_limit || totalVideos >= videoLimit) && event.plan !== 'wedding' && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFEAE4] to-[#FFF6F3] border border-[#FFD5C8] text-[#221513] space-y-2 mt-3 animate-in fade-in duration-300">
+                <div className="flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-[#FF7654]" />
+                  <span className="text-xs font-black uppercase tracking-wider text-[#D43E19]">Storage Limit Reached</span>
+                </div>
+                <p className="text-xs text-[#6E554F] leading-relaxed">
+                  Your event has reached its {event.plan?.toUpperCase() || 'FREE'} tier capacity. Upgrade to unlock more photos, HD videos, and animated stages!
+                </p>
+                <button
+                  onClick={() => setShowPricingModal(true)}
+                  className="w-full py-2.5 bg-gradient-to-r from-[#FF7654] to-[#FFA387] hover:from-[#F45732] hover:to-[#FF8E72] text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>Upgrade to Pro / Wedding Pass</span>
+                </button>
+              </div>
+            )}
           </div>
         </aside>
 

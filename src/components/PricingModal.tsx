@@ -22,8 +22,8 @@ export const PIXLANE_PLANS = [
     period: 'forever free',
     badge: null,
     features: [
-      'Up to 30 high-res photos',
-      'Up to 3 short videos (max 25MB)',
+      'Up to 60 high-res photos',
+      'Up to 10 short videos (max 50MB each)',
       '30 days active gallery storage',
       'Instant QR code & upload link',
       'No app download for guests',
@@ -40,8 +40,8 @@ export const PIXLANE_PLANS = [
     period: 'one-time per event',
     badge: 'Popular',
     features: [
-      'Up to 250 high-res photos',
-      'Up to 15 HD videos (max 100MB)',
+      'Up to 300 high-res photos',
+      'Up to 30 HD videos (max 100MB)',
       '90 days active gallery storage',
       'Animated event theme backgrounds',
       'Full ZIP archive download',

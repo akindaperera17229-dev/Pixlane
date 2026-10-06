@@ -67,8 +67,8 @@ export default function CreateEventPage() {
 
     const code = generateEventCode()
 
-    const photoLimit = selectedPlan === 'wedding' ? 9999 : selectedPlan === 'pro' ? 250 : 30
-    const videoLimit = selectedPlan === 'wedding' ? 9999 : selectedPlan === 'pro' ? 15 : 3
+    const photoLimit = selectedPlan === 'wedding' ? 9999 : selectedPlan === 'pro' ? 300 : 60
+    const videoLimit = selectedPlan === 'wedding' ? 9999 : selectedPlan === 'pro' ? 30 : 10
 
     // First attempt: insert with all extended fields
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
